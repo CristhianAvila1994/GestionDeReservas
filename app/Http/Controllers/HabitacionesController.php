@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Habitaciones;
-use App\Http\Requests\StoreHabitacionesRequest;
-use App\Http\Requests\UpdateHabitacionesRequest;
+use App\Models\Habitacione;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HabitacionesController extends Controller
 {
@@ -15,7 +15,9 @@ class HabitacionesController extends Controller
      */
     public function index()
     {
-        //
+        $habitaciones = Habitacione::paginate(10);
+
+        return view('Habitaciones.index')->with( 'habitaciones' , $habitaciones );
     }
 
     /**
@@ -25,27 +27,65 @@ class HabitacionesController extends Controller
      */
     public function create()
     {
-        //
+        return view('Habitaciones.create');
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \App\Http\Requests\StoreHabitacionesRequest  $request
+     * @param  \App\Http\Requests\StoreHabitacioneRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreHabitacionesRequest $request)
+    public function store(Request $request)
     {
-        //
+
+        $messages = [
+            'numero.integer' => 'El campo número debe ser un número entero.',
+            'numero.required' => 'El campo número es requerido.',
+            'numero.gt' => 'El campo número debe ser mayor que cero.',
+            'Tipo.string' => 'El campo Tipo debe ser una cadena de texto.',
+            'Tipo.required' => 'El campo Tipo es requerido.',
+            'precio.string' => 'El campo precio debe ser una cadena de texto.',
+            'precio.required' => 'El campo precio es requerido.',
+        ];
+
+        $request->validate([
+            'numero' => 'integer|required|gt:0',
+            'Tipo' => 'string|required',
+            'precio' => 'string|required',
+        ], $messages);
+
+        $habitacion = DB::table('habitaciones')
+               ->orderBy('id', 'desc')
+               ->first();
+
+
+
+        $cod_habitacion =  $habitacion->id;
+        $ultimos_cuatro_digitos = substr($cod_habitacion, -4);
+        $nuevo_numero = (int)$ultimos_cuatro_digitos + 1;
+        $nuevo_cod_habitacion = 'cod_Habit ' . str_pad($nuevo_numero, 4, '0', STR_PAD_LEFT);
+
+
+
+        $habitacion = new Habitacione();
+        $habitacion->id = $nuevo_cod_habitacion;
+        $habitacion->numero = $request->input('numero');
+        $habitacion->Tipo = $request->input('Tipo');
+        $habitacion->precio = $request->input('precio');
+        $habitacion->save();
+
+
+        return redirect()->route('habitaciones.index')->with('susses','Creado con exito');
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Habitaciones  $habitaciones
+     * @param  \App\Models\Habitacione  $habitacione
      * @return \Illuminate\Http\Response
      */
-    public function show(Habitaciones $habitaciones)
+    public function show(Habitacione $habitacione)
     {
         //
     }
@@ -53,34 +93,65 @@ class HabitacionesController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Habitaciones  $habitaciones
+     * @param  \App\Models\Habitacione  $habitacione
      * @return \Illuminate\Http\Response
      */
-    public function edit(Habitaciones $habitaciones)
+    public function edit($id)
     {
-        //
+
+        return view('Habitaciones.edit')->with( 'habitacion' , Habitacione::findOrFail($id) );
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Http\Requests\UpdateHabitacionesRequest  $request
-     * @param  \App\Models\Habitaciones  $habitaciones
+     * @param  \App\Http\Requests\UpdateHabitacioneRequest  $request
+     * @param  \App\Models\Habitacione  $habitacione
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateHabitacionesRequest $request, Habitaciones $habitaciones)
+    public function update(Request $request, $id)
     {
-        //
+        $messages = [
+            'numero.integer' => 'El campo número debe ser un número entero.',
+            'numero.required' => 'El campo número es requerido.',
+            'numero.gt' => 'El campo número debe ser mayor que cero.',
+            'Tipo.string' => 'El campo Tipo debe ser una cadena de texto.',
+            'Tipo.required' => 'El campo Tipo es requerido.',
+            'precio.string' => 'El campo precio debe ser una cadena de texto.',
+            'precio.required' => 'El campo precio es requerido.',
+        ];
+
+        $request->validate([
+            'numero' => 'integer|required|gt:0',
+            'Tipo' => 'string|required',
+            'precio' => 'string|required',
+        ], $messages);
+
+
+        $habitacion = Habitacione::findOrFail($id);
+        $habitacion->numero = $request->input('numero');
+        $habitacion->Tipo = $request->input('Tipo');
+        $habitacion->precio = $request->input('precio');
+        $habitacion->save();
+
+
+        return redirect()->route('habitaciones.index')->with('susses','Actualizado con exito');
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Habitaciones  $habitaciones
+     * @param  \App\Models\Habitacione  $habitacione
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Habitaciones $habitaciones)
+    public function destroy( $id)
     {
-        //
+        $habitacione = Habitacione::findOrFail($id);
+        if ($habitacione->reservas()->exists()) {
+            return redirect()->route('habitaciones.index')->with('error','No se puede eliminar esta habitación porque tiene reservaciones activas.');
+        }
+
+        $habitacione->delete();
+        return redirect()->route('habitaciones.index')->with('susses','Habitacion eliminada con exito');
     }
 }

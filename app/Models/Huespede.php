@@ -10,4 +10,11 @@ class Huespede extends Model
     use HasFactory;
     protected $table = 'huespedes';
     public $timestamps = false;
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+
+    public function reservas()
+    {
+        return $this->hasMany(Reservas::class,'Huespedes_id','id');
+    }
 }

@@ -10,4 +10,11 @@ class Habitacione extends Model
     use HasFactory;
     protected $table = 'habitaciones';
     public $timestamps = false;
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+
+    public function reservas()
+    {
+        return $this->hasMany(Reservas::class,'Habitacion_id','id');
+    }
 }

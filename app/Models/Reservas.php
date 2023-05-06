@@ -8,9 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Reservas extends Model
 {
     use HasFactory;
+    protected $table = 'reservas';
     public $timestamps = false;
-    public function Habitaciones()
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+
+    public function habitacione()
     {
-        return $this->hasMany(Habitaciones::class);
+        return $this->belongsTo(Habitacione::class,'Habitacion_id','id');
+    }
+
+    public function huespede()
+    {
+        return $this->belongsTo(Huespede::class,'Huespedes_id','id');
     }
 }
